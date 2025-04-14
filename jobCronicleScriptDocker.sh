@@ -68,7 +68,7 @@ docker run --rm \
     --network=host \
     -e NODE_OPTIONS="--max-old-space-size=8192" \
     --env-file tmp_env_file \
-    $TMP_KEXA_IMG sh -c "pnpm run start:nobuild"
+    $TMP_KEXA_IMG sh -c "bun run Kexa/index.ts"
 
 rm -rf tmp_env_file
 
