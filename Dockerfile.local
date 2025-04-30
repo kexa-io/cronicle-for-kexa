@@ -9,12 +9,32 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 RUN chmod +x ./kubectl
 RUN mv ./kubectl /usr/local/bin
 
+RUN apk add --no-cache unzip
+RUN mkdir -p /usr/local/bun && \
+    curl -L https://github.com/oven-sh/bun/releases/download/bun-v1.0.29/bun-linux-x64.zip > /tmp/bun.zip && \
+    unzip /tmp/bun.zip -d /usr/local/bun && \
+    ln -s /usr/local/bun/bun /usr/local/bin/bun && \
+    rm /tmp/bun.zip
 
 CMD dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375
+
+
+RUN mkdir -p /app/Kexa /app/data
+RUN mkdir -p /app/Kexa/config
+RUN chmod -R 775 /app
+
+WORKDIR /app
 
 ENV DOCKER_CLI_VERSION=27.3.1
 
 ENV API_KEY=""
+ENV INTERFACE_CONFIGURATION_ENABLED="true"
+ENV API_SECRET_KEY=""
+ENV API_SECRET_IV=""
+ENV API_ENCRYPTION_METHOD="AES-256-CBC"
+ENV KEXA_API_URL=""
+ENV KEXA_API_TOKEN_NAME=""
+ENV KEXA_API_TOKEN=""
 
 COPY cronicle-entrypoint.sh /cronicle-entrypoint.sh
 RUN chmod +x /cronicle-entrypoint.sh
