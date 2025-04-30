@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# export NODE_OPTIONS="--max-old-space-size=2048"
+export NODE_OPTIONS="--max-old-space-size=4096"
 
 KEXA_IMAGE="innovtech/kexabun:debugging"
 
