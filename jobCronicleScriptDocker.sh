@@ -2,7 +2,7 @@
 
 export NODE_OPTIONS="--max-old-space-size=4096"
 
-KEXA_IMAGE="innovtech/kexabun:debugging"
+KEXA_IMAGE="innovtech/kexa:latest"
 
 handle_error() {
   echo "Error occurred at line $1"
