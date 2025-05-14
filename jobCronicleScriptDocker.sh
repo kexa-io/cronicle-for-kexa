@@ -3,6 +3,7 @@
 export NODE_OPTIONS="--max-old-space-size=4096"
 
 KEXA_IMAGE="innovtech/kexa:latest"
+CRONICLE_TRIGGER_ID_FROM=
 
 handle_error() {
   echo "Error occurred at line $1"
@@ -27,6 +28,7 @@ echo API_ENCRYPTION_METHOD="${API_ENCRYPTION_METHOD:-AES-256-CBC}" >> tmp_env_fi
 echo KEXA_API_URL="${KEXA_API_URL}" >> tmp_env_file
 echo KEXA_API_TOKEN_NAME="${KEXA_API_TOKEN_NAME}" >> tmp_env_file
 echo KEXA_API_TOKEN="${KEXA_API_TOKEN}" >> tmp_env_file
+echo CRONICLE_TRIGGER_ID_FROM="${CRONICLE_TRIGGER_ID_FROM}" >> tmp_env_file
 
 echo "Running Kexa..."
 docker run --rm \
