@@ -1,61 +1,98 @@
 #!/bin/sh
 
-export NODE_OPTIONS="--max-old-space-size=4096"
+KEXA_VERSION=""
+MEMORY="8g"
+CPUS="4"
+V_RAM="500m"
 
-KEXA_IMAGE="innovtech/kexa:latest"
+# if version is not set, default to latest
+if [ -z "$KEXA_VERSION" ]; then
+    echo "KEXA_VERSION has not been set, setting to latest version."
+    KEXA_VERSION="latest"
+fi
+
+# if memory is not set, default to 2g
+if [ -z "$MEMORY" ]; then
+    echo "MEMORY has not been set, setting to default 2g."
+    MEMORY="6g"
+fi
+
+# if cpus is not set, default to 2
+if [ -z "$CPUS" ]; then
+    echo "CPUS has not been set, setting to default 2."
+    CPUS="4"
+fi
+
+KEXA_IMAGE="innovtech/kexa:$KEXA_VERSION"
 CRONICLE_TRIGGER_ID_FROM=
 
+# if Cronicle job Id is not set, exit
+if [ -z "$CRONICLE_TRIGGER_ID_FROM" ]; then
+    echo "CRONICLE_TRIGGER_ID_FROM is not set, should be sent by frontend, exiting."
+    exit 1
+fi
+
+CONTAINER_NAME="kexa-persistent-$CRONICLE_TRIGGER_ID_FROM-$(date +%s)"
+
+echo "Container name: $CRONICLE_JOB_ID"
+
 handle_error() {
-  echo "Error occurred at line $1"
-  rm -rf tmp_env_file >/dev/null 2>&1
-  exit 1
+    echo "Error occurred at line $1"
+    rm -rf tmp_env_file >/dev/null 2>&1
+    exit 1
 }
 
 trap 'handle_error $LINENO' ERR
 
-rm -rf tmp_env_file >/dev/null 2>&1 || true
+# check if persistent container exist
+if docker ps -q -f name=$CONTAINER_NAME | grep -q .; then
+    echo "Using existing Kexa container..."
+    CONTAINER_ID=$(docker ps -q -f name=$CONTAINER_NAME)
+else
+    echo "Creating persistent Kexa container..."
 
-echo "Pulling the Kexa image..."
-docker pull $KEXA_IMAGE || { echo "Failed to pull image $KEXA_IMAGE"; exit 1; }
+    # pull if don't exist locally
+    if ! docker image inspect $KEXA_IMAGE >/dev/null 2>&1; then
+        echo "Pulling the Kexa image..."
+        docker pull $KEXA_IMAGE || {
+            echo "Failed to pull image $KEXA_IMAGE"
+            exit 1
+        }
+    fi
 
-echo "Creating environment file..."
-touch tmp_env_file
+    CONTAINER_ID=$(docker run -d \
+        --name $CONTAINER_NAME \
+        --network=host \
+        --tmpfs /tmp:rw,noexec,nosuid,size=$V_RAM \
+        --memory=$MEMORY \
+        --cpus=$CPUS \
+        $KEXA_IMAGE tail -f /dev/null)
 
-echo INTERFACE_CONFIGURATION_ENABLED="${INTERFACE_CONFIGURATION_ENABLED:-true}" >> tmp_env_file
-echo API_SECRET_KEY="${API_SECRET_KEY}" >> tmp_env_file
-echo API_SECRET_IV="${API_SECRET_IV}" >> tmp_env_file
-echo API_ENCRYPTION_METHOD="${API_ENCRYPTION_METHOD:-AES-256-CBC}" >> tmp_env_file
-echo KEXA_API_URL="${KEXA_API_URL}" >> tmp_env_file
-echo KEXA_API_TOKEN_NAME="${KEXA_API_TOKEN_NAME}" >> tmp_env_file
-echo KEXA_API_TOKEN="${KEXA_API_TOKEN}" >> tmp_env_file
-echo CRONICLE_TRIGGER_ID_FROM="${CRONICLE_TRIGGER_ID_FROM}" >> tmp_env_file
-
-echo "Running Kexa..."
-docker run --rm \
-    --network=host \
-    --env-file tmp_env_file \
-    --memory=2g \
-    --memory-swap=3g \
-    --pids-limit=0 \
-    -v "$(pwd)/kexa_data:/usr/src/app/data" \
-    -v "$(pwd)/kexa_config:/usr/src/app/config" \
-    $KEXA_IMAGE sh -c "
-        chmod -R 777 /usr/src/app
-        
-        mkdir -p /usr/src/app/config
-        mkdir -p /usr/src/app/Kexa/config
-        
-        echo '{}' > /usr/src/app/config/headers.json
-        echo '{}' > /usr/src/app/Kexa/config/headers.json
-        
+    docker exec $CONTAINER_ID sh -c "
+        mkdir -p /usr/src/app/config /usr/src/app/Kexa/config
+        printf '{}' > /usr/src/app/config/headers.json
         ln -sf /usr/src/app/config/headers.json /usr/src/app/Kexa/config/headers.json
-        
-        find /usr/src/app -type d -exec chmod 777 {} \;
-        find /usr/src/app -type f -exec chmod 666 {} \;
+    "
+fi
 
-        cd /usr/src/app && bun run Kexa/index.ts
-    " || { echo "Failed to run Kexa"; handle_error $LINENO; }
+ENV_VARS=""
+ENV_VARS="$ENV_VARS -e INTERFACE_CONFIGURATION_ENABLED=${INTERFACE_CONFIGURATION_ENABLED:-true}"
+ENV_VARS="$ENV_VARS -e API_SECRET_KEY=${API_SECRET_KEY}"
+ENV_VARS="$ENV_VARS -e API_SECRET_IV=${API_SECRET_IV}"
+ENV_VARS="$ENV_VARS -e API_ENCRYPTION_METHOD=${API_ENCRYPTION_METHOD:-AES-256-CBC}"
+ENV_VARS="$ENV_VARS -e KEXA_API_URL=${KEXA_API_URL}"
+ENV_VARS="$ENV_VARS -e KEXA_API_TOKEN_NAME=${KEXA_API_TOKEN_NAME}"
+ENV_VARS="$ENV_VARS -e KEXA_API_TOKEN=${KEXA_API_TOKEN}"
+ENV_VARS="$ENV_VARS -e CRONICLE_TRIGGER_ID_FROM=${CRONICLE_TRIGGER_ID_FROM}"
+
+echo "Running Kexa in persistent container..."
+docker exec $ENV_VARS $CONTAINER_ID sh -c "cd /usr/src/app && exec bun run Kexa/index.ts" || {
+    echo "Failed to run Kexa"
+    handle_error $LINENO
+}
 
 echo "Cleaning up..."
-rm -rf tmp_env_file
+docker rm -f $CONTAINER_ID >/dev/null 2>&1 || true
+rm -rf tmp_env_file >/dev/null 2>&1 || true
+
 echo "Kexa executed successfully"
