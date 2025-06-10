@@ -1,5 +1,4 @@
 #!/bin/sh
-
 KEXA_VERSION=""
 MEMORY="8g"
 CPUS="4"
@@ -69,9 +68,9 @@ else
         $KEXA_IMAGE tail -f /dev/null)
 
     docker exec $CONTAINER_ID sh -c "
-        mkdir -p /usr/src/app/config /usr/src/app/Kexa/config
-        printf '{}' > /usr/src/app/config/headers.json
-        ln -sf /usr/src/app/config/headers.json /usr/src/app/Kexa/config/headers.json
+        mkdir -p /app/config /app/Kexa/config
+        printf '{}' > /app/config/headers.json
+        ln -sf /app/config/headers.json /app/Kexa/config/headers.json
     "
 fi
 
@@ -86,7 +85,7 @@ ENV_VARS="$ENV_VARS -e KEXA_API_TOKEN=${KEXA_API_TOKEN}"
 ENV_VARS="$ENV_VARS -e CRONICLE_TRIGGER_ID_FROM=${CRONICLE_TRIGGER_ID_FROM}"
 
 echo "Running Kexa in persistent container..."
-docker exec $ENV_VARS $CONTAINER_ID sh -c "cd /usr/src/app && exec bun run Kexa/index.ts" || {
+docker exec $ENV_VARS $CONTAINER_ID sh -c "cd /app && exec bun run Kexa/index.ts" || {
     echo "Failed to run Kexa"
     handle_error $LINENO
 }

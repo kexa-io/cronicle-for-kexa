@@ -1,4 +1,4 @@
-FROM soulteary/cronicle
+FROM soulteary/cronicle:0.9.46
 
 RUN apk update && \
     apk add --no-cache docker curl
@@ -11,7 +11,7 @@ RUN mv ./kubectl /usr/local/bin
 
 RUN apk add --no-cache unzip
 RUN mkdir -p /usr/local/bun && \
-    curl -L https://github.com/oven-sh/bun/releases/download/bun-v1.0.29/bun-linux-x64.zip > /tmp/bun.zip && \
+    curl -L https://github.com/oven-sh/bun/releases/download/bun-v1.2.15/bun-linux-x64.zip > /tmp/bun.zip && \
     unzip /tmp/bun.zip -d /usr/local/bun && \
     ln -s /usr/local/bun/bun /usr/local/bin/bun && \
     rm /tmp/bun.zip
