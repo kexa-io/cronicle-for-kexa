@@ -1,5 +1,6 @@
 #!/bin/sh
-KEXA_VERSION=""
+
+KEXA_VERSION=
 MEMORY="8g"
 CPUS="4"
 V_RAM="500m"
