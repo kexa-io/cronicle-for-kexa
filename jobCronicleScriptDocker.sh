@@ -24,6 +24,7 @@ fi
 
 KEXA_IMAGE="innovtech/kexa:$KEXA_VERSION"
 CRONICLE_TRIGGER_ID_FROM=
+INIT_PREMIUM_MODE=
 
 # if Cronicle job Id is not set, exit
 if [ -z "$CRONICLE_TRIGGER_ID_FROM" ]; then
@@ -83,6 +84,7 @@ ENV_VARS="$ENV_VARS -e KEXA_API_URL=${KEXA_API_URL}"
 ENV_VARS="$ENV_VARS -e KEXA_API_TOKEN_NAME=${KEXA_API_TOKEN_NAME}"
 ENV_VARS="$ENV_VARS -e KEXA_API_TOKEN=${KEXA_API_TOKEN}"
 ENV_VARS="$ENV_VARS -e CRONICLE_TRIGGER_ID_FROM=${CRONICLE_TRIGGER_ID_FROM}"
+ENV_VARS="$ENV_VARS -e INIT_PREMIUM_MODE=${INIT_PREMIUM_MODE:-false}"
 
 echo "Running Kexa in persistent container..."
 docker exec $ENV_VARS $CONTAINER_ID sh -c "cd /app && exec bun run Kexa/index.ts" || {
