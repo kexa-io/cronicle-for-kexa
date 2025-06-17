@@ -23,7 +23,7 @@ if [ -z "$CPUS" ]; then
     CPUS="4"
 fi
 
-KEXA_IMAGE="innovtech/kexa-dev:$KEXA_VERSION"
+KEXA_IMAGE="innovtech/kexa-dev:latest"
 CRONICLE_TRIGGER_ID_FROM=
 INIT_PREMIUM_MODE=
 
