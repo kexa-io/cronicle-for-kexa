@@ -11,15 +11,15 @@ if [ -z "$KEXA_VERSION" ]; then
     KEXA_VERSION="latest"
 fi
 
-# if memory is not set, default to 2g
+# if memory is not set, default to 6g
 if [ -z "$MEMORY" ]; then
-    echo "MEMORY has not been set, setting to default 2g."
+    echo "MEMORY has not been set, setting to default 6g."
     MEMORY="6g"
 fi
 
-# if cpus is not set, default to 2
+# if cpus is not set, default to 4
 if [ -z "$CPUS" ]; then
-    echo "CPUS has not been set, setting to default 2."
+    echo "CPUS has not been set, setting to default 4."
     CPUS="4"
 fi
 
@@ -33,48 +33,50 @@ if [ -z "$CRONICLE_TRIGGER_ID_FROM" ]; then
     exit 1
 fi
 
-CONTAINER_NAME="kexa-persistent-$CRONICLE_TRIGGER_ID_FROM-$(date +%s)"
+CONTAINER_NAME="kexa-persistent-$CRONICLE_TRIGGER_ID_FROM"
 
-echo "Container name: $CRONICLE_JOB_ID"
+# always clean up container and temp files on script exit
+trap 'docker rm -f $CONTAINER_NAME >/dev/null 2>&1 || true; rm -rf tmp_env_file >/dev/null 2>&1 || true' EXIT
+
+echo "Container name: $CONTAINER_NAME"
 
 handle_error() {
     echo "Error occurred at line $1"
-    rm -rf tmp_env_file >/dev/null 2>&1
     exit 1
 }
 
 trap 'handle_error $LINENO' ERR
 
-# check if persistent container exist
-if docker ps -q -f name=$CONTAINER_NAME | grep -q .; then
-    echo "Using existing Kexa container..."
-    CONTAINER_ID=$(docker ps -q -f name=$CONTAINER_NAME)
-else
-    echo "Creating persistent Kexa container..."
-
-    # pull if don't exist locally
-    if ! docker image inspect $KEXA_IMAGE >/dev/null 2>&1; then
-        echo "Pulling the Kexa image..."
-        docker pull $KEXA_IMAGE || {
-            echo "Failed to pull image $KEXA_IMAGE"
-            exit 1
-        }
-    fi
-
-    CONTAINER_ID=$(docker run -d \
-        --name $CONTAINER_NAME \
-        --network=host \
-        --tmpfs /tmp:rw,noexec,nosuid,size=$V_RAM \
-        --memory=$MEMORY \
-        --cpus=$CPUS \
-        $KEXA_IMAGE tail -f /dev/null)
-
-    docker exec $CONTAINER_ID sh -c "
-        mkdir -p /app/config /app/Kexa/config
-        printf '{}' > /app/config/headers.json
-        ln -sf /app/config/headers.json /app/Kexa/config/headers.json
-    "
+# remove any old container (running or stopped) with the same name
+if docker ps -a -q -f name=$CONTAINER_NAME | grep -q .; then
+    echo "Removing old container $CONTAINER_NAME..."
+    docker rm -f $CONTAINER_NAME >/dev/null 2>&1 || true
 fi
+
+echo "Creating persistent Kexa container..."
+
+# pull if it doesn't exist locally
+if ! docker image inspect $KEXA_IMAGE >/dev/null 2>&1; then
+    echo "Pulling the Kexa image..."
+    docker pull $KEXA_IMAGE || {
+        echo "Failed to pull image $KEXA_IMAGE"
+        exit 1
+    }
+fi
+
+CONTAINER_ID=$(docker run -d \
+    --name $CONTAINER_NAME \
+    --network=host \
+    --tmpfs /tmp:rw,noexec,nosuid,size=$V_RAM \
+    --memory=$MEMORY \
+    --cpus=$CPUS \
+    $KEXA_IMAGE tail -f /dev/null)
+
+docker exec $CONTAINER_ID sh -c "
+    mkdir -p /app/config /app/Kexa/config
+    printf '{}' > /app/config/headers.json
+    ln -sf /app/config/headers.json /app/Kexa/config/headers.json
+"
 
 ENV_VARS=""
 ENV_VARS="$ENV_VARS -e INTERFACE_CONFIGURATION_ENABLED=true"
@@ -92,9 +94,5 @@ docker exec $ENV_VARS $CONTAINER_ID sh -c "cd /app && exec bun run Kexa/index.ts
     echo "Failed to run Kexa"
     handle_error $LINENO
 }
-
-echo "Cleaning up..."
-docker rm -f $CONTAINER_ID >/dev/null 2>&1 || true
-rm -rf tmp_env_file >/dev/null 2>&1 || true
 
 echo "Kexa executed successfully"
