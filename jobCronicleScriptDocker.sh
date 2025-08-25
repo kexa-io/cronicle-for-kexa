@@ -79,26 +79,24 @@ docker exec $CONTAINER_ID sh -c "
 "
 
 
-REQUIRED_VARS=("KEXA_API_TOKEN" "KEXA_API_TOKEN_NAME" "KEXA_API_URL" "CRONICLE_TRIGGER_ID_FROM")
+REQUIRED_VARS="KEXA_API_TOKEN KEXA_API_TOKEN_NAME KEXA_API_URL CRONICLE_TRIGGER_ID_FROM"
 
 echo "Waiting for required environment variables..."
 while true; do
     all_set=true
-    for var in "${REQUIRED_VARS[@]}"; do
-        if [ -z "${!var}" ]; then
+    for var in $REQUIRED_VARS; do
+        eval "value=\${$var}"
+        if [ -z "$value" ]; then
             all_set=false
             break
         fi
     done
-    
-    if $all_set; then
+    if [ "$all_set" = true ]; then
         echo "All environment variables are set!"
         break
     fi
-    
-    sleep 0.5
+    sleep 1
 done
-
 
 ENV_VARS=""
 ENV_VARS="$ENV_VARS -e INTERFACE_CONFIGURATION_ENABLED=true"
