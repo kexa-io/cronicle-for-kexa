@@ -78,14 +78,26 @@ docker exec $CONTAINER_ID sh -c "
     ln -sf /app/config/headers.json /app/Kexa/config/headers.json
 "
 
-echo "Kexa api token"
-echo $KEXA_API_TOKEN
-echo "Kexa api token name"
-echo $KEXA_API_TOKEN_NAME
-echo "Kexa api url"
-echo $KEXA_API_URL
-echo "Cronicle trigger id from"
-echo $CRONICLE_TRIGGER_ID_FROM
+
+REQUIRED_VARS=("KEXA_API_TOKEN" "KEXA_API_TOKEN_NAME" "KEXA_API_URL" "CRONICLE_TRIGGER_ID_FROM")
+
+echo "Waiting for required environment variables..."
+while true; do
+    all_set=true
+    for var in "${REQUIRED_VARS[@]}"; do
+        if [ -z "${!var}" ]; then
+            all_set=false
+            break
+        fi
+    done
+    
+    if $all_set; then
+        echo "All environment variables are set!"
+        break
+    fi
+    
+    sleep 0.5
+done
 
 
 ENV_VARS=""
