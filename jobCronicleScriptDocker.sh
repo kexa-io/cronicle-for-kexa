@@ -78,6 +78,16 @@ docker exec $CONTAINER_ID sh -c "
     ln -sf /app/config/headers.json /app/Kexa/config/headers.json
 "
 
+echo "Kexa api token"
+echo $KEXA_API_TOKEN
+echo "Kexa api token name"
+echo $KEXA_API_TOKEN_NAME
+echo "Kexa api url"
+echo $KEXA_API_URL
+echo "Cronicle trigger id from"
+echo $CRONICLE_TRIGGER_ID_FROM
+
+
 ENV_VARS=""
 ENV_VARS="$ENV_VARS -e INTERFACE_CONFIGURATION_ENABLED=true"
 ENV_VARS="$ENV_VARS -e API_SECRET_KEY=${API_SECRET_KEY}"
