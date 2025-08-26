@@ -98,12 +98,6 @@ while true; do
     sleep 1
 done
 
-echo "All env var debugging "
-echo "KEXA_API_TOKEN=${KEXA_API_TOKEN}"
-echo "KEXA_API_TOKEN_NAME=${KEXA_API_TOKEN_NAME}"
-echo "KEXA_API_URL=${KEXA_API_URL}"
-echo "CRONICLE_TRIGGER_ID_FROM=${CRONICLE_TRIGGER_ID_FROM}"
-
 
 ENV_VARS=""
 ENV_VARS="$ENV_VARS -e INTERFACE_CONFIGURATION_ENABLED=true"
