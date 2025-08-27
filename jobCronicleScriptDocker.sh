@@ -112,6 +112,10 @@ ENV_VARS="$ENV_VARS -e CRONICLE_TRIGGER_ID_FROM=${CRONICLE_TRIGGER_ID_FROM}"
 ENV_VARS="$ENV_VARS -e INIT_PREMIUM_MODE=${INIT_PREMIUM_MODE:-false}"
 
 echo "Running Kexa in persistent container..."
+
+echo "content of Kexa/  with docker exe:"
+docker exec $CONTAINER_ID sh -c "ls -la /app/Kexa"
+
 docker exec $ENV_VARS $CONTAINER_ID sh -c "cd /app && exec bun run Kexa/index.ts" || {
     echo "Failed to run Kexa"
     handle_error $LINENO
