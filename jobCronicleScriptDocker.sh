@@ -23,7 +23,7 @@ if [ -z "$CPUS" ]; then
     CPUS="4"
 fi
 
-KEXA_IMAGE="innovtech/kexa:$KEXA_VERSION"
+KEXA_IMAGE="kexa/kexa-dev:$KEXA_VERSION"
 CRONICLE_TRIGGER_ID_FROM=
 INIT_PREMIUM_MODE=
 
@@ -38,6 +38,7 @@ CONTAINER_NAME="kexa-persistent-$CRONICLE_TRIGGER_ID_FROM"
 # always clean up container and temp files on script exit
 trap 'docker rm -f $CONTAINER_NAME >/dev/null 2>&1 || true; rm -rf tmp_env_file >/dev/null 2>&1 || true' EXIT
 
+echo "Kexa version: $KEXA_VERSION"
 echo "Container name: $CONTAINER_NAME"
 
 handle_error() {
