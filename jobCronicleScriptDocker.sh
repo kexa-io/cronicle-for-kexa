@@ -1,9 +1,20 @@
 #!/bin/sh
 
+# cpu : 4
+# memory : 8g
+# v_ram : 500m
+
 KEXA_VERSION=
-MEMORY="8g"
-CPUS="4"
-V_RAM="500m"
+NODE_TLS_REJECT_UNAUTHORIZED=
+MEMORY=
+CPUS=
+V_RAM=
+
+# if NODE_TLS_REJECT_UNAUTHORIZED is not set, default to 0
+if [ -z "$NODE_TLS_REJECT_UNAUTHORIZED" ]; then
+    echo "NODE_TLS_REJECT_UNAUTHORIZED has not been set, setting to 0."
+    NODE_TLS_REJECT_UNAUTHORIZED=0
+fi
 
 # if version is not set, default to latest
 if [ -z "$KEXA_VERSION" ]; then
@@ -11,16 +22,22 @@ if [ -z "$KEXA_VERSION" ]; then
     KEXA_VERSION="latest"
 fi
 
-# if memory is not set, default to 6g
+# if memory is not set, default to 8g
 if [ -z "$MEMORY" ]; then
-    echo "MEMORY has not been set, setting to default 6g."
-    MEMORY="6g"
+    echo "MEMORY has not been set, setting to default 8g."
+    MEMORY="8g"
 fi
 
 # if cpus is not set, default to 4
 if [ -z "$CPUS" ]; then
     echo "CPUS has not been set, setting to default 4."
     CPUS="4"
+fi
+
+# if v_ram is not set, default to 500m
+if [ -z "$V_RAM" ]; then
+    echo "V_RAM has not been set, setting to default 500m."
+    V_RAM="500m"
 fi
 
 KEXA_IMAGE="kexa/kexa:$KEXA_VERSION"
@@ -101,7 +118,7 @@ done
 
 
 ENV_VARS=""
-ENV_VARS="$ENV_VARS -e NODE_TLS_REJECT_UNAUTHORIZED=0"
+ENV_VARS="$ENV_VARS -e NODE_TLS_REJECT_UNAUTHORIZED=${NODE_TLS_REJECT_UNAUTHORIZED}"
 ENV_VARS="$ENV_VARS -e INTERFACE_CONFIGURATION_ENABLED=true"
 ENV_VARS="$ENV_VARS -e API_SECRET_KEY=${API_SECRET_KEY}"
 ENV_VARS="$ENV_VARS -e API_SECRET_IV=${API_SECRET_IV}"
