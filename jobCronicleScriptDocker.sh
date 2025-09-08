@@ -10,10 +10,10 @@ MEMORY=
 CPUS=
 V_RAM=
 
-# if NODE_TLS_REJECT_UNAUTHORIZED is not set, default to 0
+# if NODE_TLS_REJECT_UNAUTHORIZED is not set, default to 1
 if [ -z "$NODE_TLS_REJECT_UNAUTHORIZED" ]; then
-    echo "NODE_TLS_REJECT_UNAUTHORIZED has not been set, setting to 0."
-    NODE_TLS_REJECT_UNAUTHORIZED=0
+    echo "NODE_TLS_REJECT_UNAUTHORIZED has not been set, setting to 1 (reject)."
+    NODE_TLS_REJECT_UNAUTHORIZED=1
 fi
 
 # if version is not set, default to latest
